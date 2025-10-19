@@ -17,6 +17,13 @@ The following repository paths are not excluded by `.gitignore` and are therefor
 - TROUBLESHOOTING.md
 - "This is the minimal and necessary set of files for a GitHub repository….pdf"
 - install-deps-simple.sh
+- app/api/generate-pdf/route.ts
+- app/components/PdfGeneratorForm.tsx
+- app/globals.css
+- app/layout.tsx
+- app/page.tsx
+- install-deps-simple.sh
+- lib/archiveServices.ts
 - next-env.d.ts
 - next.config.mjs
 - package-lock.json
