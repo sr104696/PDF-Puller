@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
-import { ARCHIVE_SERVICES, type ArchiveServiceKey } from '@/lib/archiveServices';
+import { ARCHIVE_CATALOG, type ArchiveProviderId } from '@/src/features/archive/config/catalog';
 
 type GenerateResponse =
   | {
@@ -12,9 +12,9 @@ type GenerateResponse =
       message: string;
     };
 
-export function PdfGeneratorForm() {
-  const [url, setUrl] = useState('');
-  const [service, setService] = useState<ArchiveServiceKey>('archive-ph');
+export function ArchiveRequestPanel() {
+  const [targetUrl, setTargetUrl] = useState('');
+  const [provider, setProvider] = useState<ArchiveProviderId>('archive-today');
   const [status, setStatus] = useState<'idle' | 'loading' | 'error' | 'success'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -27,12 +27,12 @@ export function PdfGeneratorForm() {
       setErrorMessage('');
 
       try {
-        const response = await fetch('/api/generate-pdf', {
+        const response = await fetch('/api/pdf-render', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ url, service }),
+          body: JSON.stringify({ url: targetUrl, provider }),
         });
 
         if (!response.ok) {
@@ -44,16 +44,16 @@ export function PdfGeneratorForm() {
         }
 
         const blob = await response.blob();
-        const archiveLabel = ARCHIVE_SERVICES[service]?.label ?? 'archive';
-        const fileName = `pdf-beans-${archiveLabel}-${Date.now()}.pdf`;
-        const urlObject = window.URL.createObjectURL(blob);
+        const providerLabel = ARCHIVE_CATALOG[provider]?.label ?? 'archive';
+        const fileName = `archive-studio-${providerLabel}-${Date.now()}.pdf`;
+        const objectUrl = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.href = urlObject;
+        link.href = objectUrl;
         link.download = fileName;
         document.body.appendChild(link);
         link.click();
         link.remove();
-        window.URL.revokeObjectURL(urlObject);
+        window.URL.revokeObjectURL(objectUrl);
 
         setStatus('success');
       } catch (error) {
@@ -62,7 +62,7 @@ export function PdfGeneratorForm() {
         setErrorMessage('Failed to generate PDF. Please try again.');
       }
     },
-    [service, url],
+    [provider, targetUrl],
   );
 
   return (
@@ -71,44 +71,42 @@ export function PdfGeneratorForm() {
       className="flex flex-col gap-6 rounded-xl border border-slate-800 bg-slate-900/70 p-6 shadow-xl"
     >
       <div className="flex flex-col gap-2">
-        <label htmlFor="url" className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+        <label htmlFor="target-url" className="text-sm font-semibold uppercase tracking-wide text-slate-400">
           Page URL
         </label>
         <input
-          id="url"
+          id="target-url"
           type="url"
           required
           placeholder="https://example.com/article"
           className="w-full rounded-lg border border-slate-700 bg-slate-950/80 px-4 py-3 text-base text-slate-100 outline-none transition focus:border-cyan-400 focus:shadow-[0_0_0_2px_rgba(6,182,212,0.15)]"
-          value={url}
-          onChange={(event) => setUrl(event.target.value)}
+          value={targetUrl}
+          onChange={(event) => setTargetUrl(event.target.value)}
           disabled={disabled}
         />
       </div>
 
       <div className="flex flex-col gap-2">
         <label
-          htmlFor="archive-service"
+          htmlFor="archive-provider"
           className="text-sm font-semibold uppercase tracking-wide text-slate-400"
         >
-          Archive service
+          Archive provider
         </label>
         <select
-          id="archive-service"
+          id="archive-provider"
           className="w-full rounded-lg border border-slate-700 bg-slate-950/80 px-4 py-3 text-base text-slate-100 outline-none transition focus:border-cyan-400 focus:shadow-[0_0_0_2px_rgba(6,182,212,0.15)]"
-          value={service}
-          onChange={(event) => setService(event.target.value as ArchiveServiceKey)}
+          value={provider}
+          onChange={(event) => setProvider(event.target.value as ArchiveProviderId)}
           disabled={disabled}
         >
-          {Object.entries(ARCHIVE_SERVICES).map(([key, value]) => (
+          {Object.entries(ARCHIVE_CATALOG).map(([key, value]) => (
             <option key={key} value={key}>
               {value.label}
             </option>
           ))}
         </select>
-        <p className="text-xs text-slate-500">
-          {ARCHIVE_SERVICES[service]?.description}
-        </p>
+        <p className="text-xs text-slate-500">{ARCHIVE_CATALOG[provider]?.description}</p>
       </div>
 
       <button
